@@ -1,20 +1,26 @@
 import type { LinksFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Outlet, Link, useLoaderData } from "@remix-run/react";
-import type { Joke } from "@prisma/client";
 import stylesUrl from "~/styles/jokes.css";
 import { db } from "~/utils/db.server";
+import type { Joke } from "@prisma/client";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: stylesUrl }];
 };
 
 type LoaderData = {
-  jokes: Array<Joke>;
+  jokes: Array<Pick<Joke, "id" | "name">>;
 };
 
 export const loader: LoaderFunction = async () => {
-  const data: LoaderData = { jokes: await db.joke.findMany() };
+  const data: LoaderData = {
+    jokes: await db.joke.findMany({
+      take: 5,
+      select: { id: true, name: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  };
   return json(data);
 };
 
